@@ -1,0 +1,32 @@
+            CONSTANT btn_port, 01
+            CONSTANT led_port, 02
+            NAMEREG s0, counter
+            NAMEREG s1, current_btn
+            NAMEREG s2, previous_btn
+            NAMEREG s3, temp
+            ; INITIALIZATION
+            LOAD counter, 00
+            LOAD previous_btn, 00
+ main_loop: 
+            INPUT current_btn, btn_port
+            LOAD temp, current_btn
+            AND temp, 01
+            COMPARE temp, 01
+            JUMP NZ, check_dec
+            TEST previous_btn, 01
+            JUMP NZ, check_dec
+            ADD counter, 01
+            AND counter, 0F
+ check_dec: 
+            LOAD temp, current_btn
+            AND temp, 02
+            COMPARE temp, 02
+            JUMP NZ, update_out
+            TEST previous_btn, 02
+            JUMP NZ, update_out
+            SUB counter, 01
+            AND counter, 0F
+update_out: 
+            OUTPUT counter, led_port
+            LOAD previous_btn, current_btn
+            JUMP main_loop
