@@ -40,6 +40,9 @@ architecture Behavioral of top is
                     rdl : out std_logic;                    
                     clk : in std_logic);
   end component;
+  
+  signal counter_reg   : std_logic_vector(3 downto 0) := "0000";
+  
   component kcpsm6 
     generic(                 hwbuild : std_logic_vector(7 downto 0) := X"00";
                     interrupt_vector : std_logic_vector(11 downto 0) := X"3FF";
@@ -108,6 +111,9 @@ architecture Behavioral of top is
             led7_seg_o : out std_logic_vector (7 downto 0));
    end component;
    
+   signal segment : std_logic_vector(7 downto 0);
+   signal segment_out : std_logic_vector(31 downto 0);
+   
    component debouncer
     Port ( clk_i : in STD_LOGIC;
            btn_i : in STD_LOGIC;
@@ -165,5 +171,52 @@ begin
   decrement_debounce : debouncer
   port map(     clk_i => clk_i,
                 btn_i => button_i(1),
-                btn_debounced_o => btn_decrement);         
+                btn_debounced_o => btn_decrement);
+  disp : display
+  port map(     clk_i => clk_i,
+                rst_i => rst_i,
+                digit_i => segment_out,
+                led7_an_o => led7_an_o,
+                led7_seg_o => led7_seg_o);
+                             
+  input : process(clk_i)
+  begin
+        if rising_edge(clk_i) then
+            if port_id = X"01" then 
+                in_port <= "000000" & btn_decrement & btn_increment;
+            else
+                in_port <= (others => '0');
+            end if;
+        end if;
+    end process;
+    
+  output : process(clk_i)
+    begin
+        if rising_edge(clk_i) then
+            if write_strobe = '1' and port_id = X"02" then
+                counter_reg <= out_port(3 downto 0);
+            end if;
+        end if;
+    end process;
+    
+    with counter_reg select
+        segment <= "1000000" when "0000", -- 0
+                   "1111001" when "0001", -- 1
+                   "0100100" when "0010", -- 2
+                   "0110000" when "0011", -- 3
+                   "0011001" when "0100", -- 4
+                   "0010010" when "0101", -- 5
+                   "0000010" when "0110", -- 6
+                   "1111000" when "0111", -- 7
+                   "0000000" when "1000", -- 8
+                   "0010000" when "1001", -- 9
+                   "0001000" when "1010", -- A
+                   "0000011" when "1011", -- b
+                   "1000110" when "1100", -- C
+                   "0100001" when "1101", -- d
+                   "0000110" when "1110", -- E
+                   "0001110" when "1111", -- F
+                   "1111111" when others;
+  segment_out <= X"FFF" & segment;
+  
 end Behavioral;
