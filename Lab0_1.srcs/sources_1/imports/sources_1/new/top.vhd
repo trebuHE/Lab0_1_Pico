@@ -13,7 +13,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity top is
     Port (  clk_i : in std_logic;
             rst_i : in std_logic;
-            button_i : in std_logic_vector(2 downto 0);
+            button_i : in std_logic_vector(3 downto 0);
             led7_an_o : out std_logic_vector(3 downto 0);
             led7_seg_o : out std_logic_vector(7 downto 0)
      );
@@ -107,11 +107,16 @@ architecture Behavioral of top is
             led7_an_o : out std_logic_vector (3 downto 0);
             led7_seg_o : out std_logic_vector (7 downto 0));
    end component;
-        
+   
+   component debouncer
+    Port ( clk_i : in STD_LOGIC;
+           btn_i : in STD_LOGIC;
+           btn_debounced_o : out STD_LOGIC);
+    end component;
+    
+    signal btn_increment : std_logic;
+    signal btn_decrement : std_logic;
 begin
-
-in_port <= "00000000";
-
 
  processor: kcpsm6
     generic map (                 hwbuild => X"00", 
@@ -136,9 +141,7 @@ in_port <= "00000000";
     kcpsm6_sleep <= '0';
     interrupt <= interrupt_ack;
     
-    led_o <= out_port;
-    
-    program_rom: blink                           --Name to match your PSM file
+    program_rom: counter                           --Name to match your PSM file
     generic map(             C_FAMILY => "V6",   --Family 'S6', 'V6' or '7S'
                     C_RAM_SIZE_KWORDS => 1,      --Program size '1', '2' or '4'
                  C_JTAG_LOADER_ENABLE => 0)      --Include JTAG Loader when set to '1' 
@@ -154,5 +157,13 @@ in_port <= "00000000";
    port map(    clk_i => clk_i,
                 clk_o => clk);
             
-   led_clk_o <= clk;     
+  increment_debounce : debouncer
+  port map(     clk_i => clk_i,
+                btn_i => button_i(0),
+                btn_debounced_o => btn_increment);
+                
+  decrement_debounce : debouncer
+  port map(     clk_i => clk_i,
+                btn_i => button_i(1),
+                btn_debounced_o => btn_decrement);         
 end Behavioral;
