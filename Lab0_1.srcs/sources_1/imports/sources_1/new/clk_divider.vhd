@@ -16,13 +16,13 @@ entity clk_divider is
 end clk_divider;
 
 architecture Behavioral of clk_divider is
-    signal clk_counter : unsigned(25 downto 0) := (others => '0');
+    signal clk_counter : unsigned(15 downto 0) := (others => '0');
     signal clk : std_logic := '0';
 begin
     process(clk_i)
     begin
         if rising_edge(clk_i) then
-            if clk_counter < 50000000 then
+            if clk_counter < 50000 then
                 clk_counter  <= clk_counter + 1;
             else
                 clk <= not clk;
